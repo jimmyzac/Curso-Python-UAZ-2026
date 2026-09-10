@@ -1,5 +1,5 @@
 """
-Curso interactivo de Python — v0.4
+Curso interactivo de Python — v0.5
 Persistencia opcional mediante Google Sheets + Apps Script Web App.
 """
 
@@ -8,7 +8,7 @@ import json
 import urllib.parse
 import urllib.request
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 REGISTRO_URL_PREDETERMINADA = "https://script.google.com/macros/s/AKfycbwf6eJTMxSmTPHdMkTr-A1FJbh7gvSrvJxP8Jn8eZRaw6Q5zY-5ZPxtumf4lNOttL2hcw/exec"
 
 LESSONS = [
@@ -98,6 +98,23 @@ class Curso:
         print("\n" + "=" * 68)
         print(texto.center(68))
         print("=" * 68)
+
+    def barra_progreso(self):
+        total = len(LESSONS)
+        hechas = len(self.completadas)
+        ancho = 20
+        llenas = round(ancho * hechas / total)
+        barra = "█" * llenas + "░" * (ancho - llenas)
+        return f"[{barra}] {hechas}/{total} ({100*hechas/total:.0f}%)"
+
+    def siguiente_leccion(self):
+        for code, name in LESSONS:
+            if code not in self.completadas:
+                return code, name
+        return None, None
+
+    def mensaje_control(self):
+        print("Comandos disponibles: MENU = volver al menú | SALIR = cerrar curso\n")
 
     def explicar(self, texto):
         print("\n" + texto.strip() + "\n")
@@ -195,6 +212,12 @@ class Curso:
         print("-" * 68)
         print(f"✓ LECCIÓN {codigo} COMPLETADA")
         print(resumen)
+        print("Progreso:", self.barra_progreso())
+        sig, nombre = self.siguiente_leccion()
+        if sig:
+            print(f"Siguiente lección sugerida: {sig} · {nombre}")
+        else:
+            print("🎉 Has completado todas las lecciones disponibles.")
         print("-" * 68)
         self.guardar_remoto()
 
@@ -237,10 +260,20 @@ class Curso:
                 for k, v in previo.get("intentos_por_leccion", {}).items()
             }
             print("\n✓ Se encontró progreso anterior.")
-            print(f"Progreso recuperado: {previo.get('progreso_pct', 0)}%")
-            print(f"Última actividad: {previo.get('ultima_actividad', 'sin fecha')}")
+            print("Progreso recuperado:", self.barra_progreso())
+            ultima = str(previo.get("ultima_actividad", "sin fecha"))
+            try:
+                dt = datetime.fromisoformat(ultima.replace("Z", "+00:00"))
+                ultima = dt.strftime("%d/%m/%Y %H:%M")
+            except Exception:
+                pass
+            print(f"Última actividad: {ultima}")
+            code, name = self.siguiente_leccion()
+            if code:
+                print(f"Siguiente lección sugerida: {code} · {name}")
         elif self.registro.activo:
-            print("\nNo se encontró progreso previo. Se creará un registro nuevo.")
+            print("\n✓ Registro nuevo creado.")
+            print("Progreso inicial:", self.barra_progreso())
             self.guardar_remoto()
         else:
             print("\n⚠ Registro remoto desactivado. El progreso no persistirá entre sesiones.")
@@ -248,12 +281,16 @@ class Curso:
     # ---------- Lecciones ----------
     def l11(self):
         L="1.1"; self.titulo("1.1 · INTRODUCCIÓN Y OPERACIONES BÁSICAS")
-        self.explicar("""Python es un lenguaje de programación. Una instrucción indica a
-Python qué debe hacer. Una de las primeras funciones que aprenderemos es
-print(), que permite mostrar información en pantalla.
+        self.explicar("""Python es un lenguaje de programación interpretado. En un cuaderno
+como Google Colab escribimos instrucciones en celdas y Python las ejecuta de
+arriba hacia abajo.
+
+Una instrucción indica a Python qué debe hacer. Una de las primeras funciones
+que aprenderemos es print(), que muestra información en pantalla.
 
 Python distingue entre mayúsculas y minúsculas: print y Print son nombres
-diferentes.""")
+diferentes. También importa escribir correctamente paréntesis, comillas y
+operadores.""")
         self.ejemplo('print("Hola Python")', "Hola Python")
         self.codigo(L, 'Escribe una instrucción que muestre: Hola Python',
                     lambda e,c: "print" in c and "Hola Python" in c,
@@ -268,6 +305,9 @@ Los paréntesis permiten controlar el orden de las operaciones.""")
         self.ejemplo("(10 + 5) * 2", 30)
         self.expresion(L, "Multiplica 8 por 5 usando Python.",
                        lambda v,c,e: v==40 and "*" in c, "Usa *.")
+        self.expresion(L, "Calcula (12 + 3) dividido entre 5.",
+                       lambda v,c,e: abs(float(v)-3)<1e-12 and "(" in c and "/" in c,
+                       "Usa paréntesis para sumar primero.")
         self.expresion(L, "Calcula 5 elevado al cuadrado.",
                        lambda v,c,e: v==25 and "**" in c, "La potencia se escribe **.")
         self.explicar("""Un comentario comienza con #. Python ignora el texto que aparece
@@ -296,6 +336,12 @@ objeto a una variable.""")
         self.codigo(L, "Crea tasa con el valor decimal 0.08.",
                     lambda e,c: e.get("tasa")==0.08 and type(e.get("tasa")) is float,
                     "Escribe tasa = 0.08.")
+        self.explicar("""El operador + depende del tipo de objeto. Con números suma;
+con strings concatena texto. Por eso 2 + 3 produce 5, mientras que
+"2" + "3" produce "23".""")
+        self.expresion(L, 'Concatena "Eco" y "nomía" usando +.',
+                       lambda v,c,e: v=="Economía" and "+" in c,
+                       'Escribe "Eco" + "nomía".')
         self.opcion(L, "¿Qué tipo es 2.5?\nA) int   B) float   C) str",
                     ["b","float"])
         self.completar(L, "Aprendiste str, int, float, variables, = y type().")
@@ -466,6 +512,13 @@ condiciones que producen True o False.""")
         }
         while True:
             self.titulo("MENÚ DEL CURSO")
+            print("Progreso:", self.barra_progreso())
+            code_sig, name_sig = self.siguiente_leccion()
+            if code_sig:
+                print(f"Siguiente sugerida: {code_sig} · {name_sig}")
+            else:
+                print("✓ Curso completado")
+            print()
             for k,(nombre,_) in acciones.items():
                 code=LESSONS[int(k)-1][0]
                 marca="✓" if code in self.completadas else " "
@@ -513,4 +566,4 @@ def iniciar_curso(registro_url=None):
     except VolverAlMenu:
         # Durante el registro no existe todavía un menú utilizable.
         print("\nRegistro cancelado. Curso finalizado.")
-    return curso
+    return None
