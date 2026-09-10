@@ -338,11 +338,11 @@ class Curso:
     # ---------- Lecciones ----------
     def l11(self):
         L="1.1"; self.titulo("1.1 · INTRODUCCIÓN Y OPERACIONES BÁSICAS")
-        self.explicar("""Python es un lenguaje de programación interpretado. En un cuaderno
+        self.explicar("""Python es un lenguaje de Programación  Orientado a Objetos (POO). En un cuaderno
 como Google Colab escribimos instrucciones en celdas y Python las ejecuta de
 arriba hacia abajo.
 
-Una instrucción indica a Python qué debe hacer. Una de las primeras funciones
+Una instrucción o código indica a Python qué debe hacer. Una de las primeras funciones
 que aprenderemos es print(), que muestra información en pantalla.
 
 Python distingue entre mayúsculas y minúsculas: print y Print son nombres
