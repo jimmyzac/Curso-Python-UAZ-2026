@@ -1,14 +1,14 @@
 """
-Curso interactivo de Python
-Bloque I: fundamentos de Python, NumPy y pandas.
-Pensado para ejecutarse desde Google Colab.
+Curso interactivo de Python — v0.3
+Persistencia opcional mediante Google Sheets + Apps Script Web App.
 """
 
 from datetime import date, datetime, timedelta
 import json
-import os
+import urllib.parse
+import urllib.request
 
-VERSION = "0.1.0"
+VERSION = "0.3.0"
 
 LESSONS = [
     ("1.1", "Introducción y operaciones básicas"),
@@ -23,13 +23,59 @@ LESSONS = [
     ("3.3", "pandas: slicing y filtrado"),
 ]
 
+class RegistroRemoto:
+    def __init__(self, url=None):
+        self.url = (url or "").strip()
+
+    @property
+    def activo(self):
+        return self.url.startswith("http")
+
+    def cargar(self, matricula, grupo, periodo):
+        if not self.activo:
+            return None
+        params = urllib.parse.urlencode({
+            "action": "get",
+            "matricula": matricula,
+            "grupo": grupo,
+            "periodo": periodo,
+        })
+        try:
+            with urllib.request.urlopen(self.url + "?" + params, timeout=15) as r:
+                data = json.loads(r.read().decode("utf-8"))
+            if data.get("ok") and data.get("found"):
+                return data.get("record")
+        except Exception as e:
+            print(f"⚠ No fue posible recuperar el progreso remoto: {e}")
+        return None
+
+    def guardar(self, payload):
+        if not self.activo:
+            return False
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        req = urllib.request.Request(
+            self.url,
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=15) as r:
+                data = json.loads(r.read().decode("utf-8"))
+            return bool(data.get("ok"))
+        except Exception as e:
+            print(f"⚠ No fue posible guardar el progreso remoto: {e}")
+            return False
+
+
 class Curso:
-    def __init__(self):
+    def __init__(self, registro_url=None):
         self.alumno = {}
         self.completadas = set()
         self.intentos = {}
         self.env = {"date": date, "datetime": datetime, "timedelta": timedelta}
         self.inicio = datetime.now()
+        self.registro = RegistroRemoto(registro_url)
 
     def titulo(self, texto):
         print("\n" + "=" * 68)
@@ -103,21 +149,69 @@ class Curso:
                 print("Pista:", pista)
             print()
 
+    def estado(self):
+        return {
+            **self.alumno,
+            "version": VERSION,
+            "inicio": self.inicio.isoformat(timespec="seconds"),
+            "ultima_actividad": datetime.now().isoformat(timespec="seconds"),
+            "lecciones_completadas": sorted(self.completadas),
+            "intentos_por_leccion": self.intentos,
+            "progreso_pct": round(100 * len(self.completadas) / len(LESSONS), 1),
+            "curso_completado": len(self.completadas) == len(LESSONS),
+        }
+
+    def guardar_remoto(self):
+        if self.registro.activo:
+            ok = self.registro.guardar(self.estado())
+            if ok:
+                print("☁ Progreso guardado.")
+            else:
+                print("⚠ El progreso no pudo guardarse en este momento.")
+
     def completar(self, codigo, resumen):
         self.completadas.add(codigo)
         print("-" * 68)
         print(f"✓ LECCIÓN {codigo} COMPLETADA")
         print(resumen)
         print("-" * 68)
+        self.guardar_remoto()
 
     def identificacion(self):
         self.titulo("CURSO INTERACTIVO DE PYTHON")
-        print("Antes de comenzar registra tus datos.\n")
-        self.alumno["nombre"] = input("Nombre completo: ").strip()
-        self.alumno["matricula"] = input("Matrícula: ").strip()
-        self.alumno["grupo"] = input("Código del grupo: ").strip()
-        self.alumno["periodo"] = input("Periodo (ej. Ago-Dic 2026): ").strip()
+        print("Registra tus datos para recuperar y guardar tu progreso.\n")
+        def normalizar(texto):
+            # Conserva acentos, normaliza espacios y convierte a mayúsculas.
+            import unicodedata
+            texto = unicodedata.normalize("NFC", str(texto or ""))
+            return " ".join(texto.strip().split()).upper()
 
+        self.alumno["nombre"] = normalizar(input("Nombre completo: "))
+        self.alumno["matricula"] = normalizar(input("Matrícula: "))
+        self.alumno["grupo"] = normalizar(input("Código del grupo: "))
+        self.alumno["periodo"] = normalizar(input("Periodo (ej. Ago-Dic 2026): "))
+
+        previo = self.registro.cargar(
+            self.alumno["matricula"],
+            self.alumno["grupo"],
+            self.alumno["periodo"]
+        )
+        if previo:
+            self.completadas = set(previo.get("lecciones_completadas", []))
+            self.intentos = {
+                str(k): int(v)
+                for k, v in previo.get("intentos_por_leccion", {}).items()
+            }
+            print("\n✓ Se encontró progreso anterior.")
+            print(f"Progreso recuperado: {previo.get('progreso_pct', 0)}%")
+            print(f"Última actividad: {previo.get('ultima_actividad', 'sin fecha')}")
+        elif self.registro.activo:
+            print("\nNo se encontró progreso previo. Se creará un registro nuevo.")
+            self.guardar_remoto()
+        else:
+            print("\n⚠ Registro remoto desactivado. El progreso no persistirá entre sesiones.")
+
+    # ---------- Lecciones ----------
     def l11(self):
         L="1.1"; self.titulo("1.1 · INTRODUCCIÓN Y OPERACIONES BÁSICAS")
         self.explicar("""Python es un lenguaje de programación. Una instrucción indica a
@@ -227,7 +321,7 @@ Esta diferencia será muy importante en NumPy y pandas.""")
         self.explicar("""Una tupla es una colección ordenada que normalmente tratamos como
 inmutable y se escribe con paréntesis. Un diccionario almacena pares
 clave: valor y se escribe con llaves.""")
-        self.ejemplo('coordenada = (10, 20)\nalumno = {"nombre":"Ana", "edad":21}', "")
+        self.ejemplo('coordenada = (10, 20)\nalumno = {"nombre":"Ana", "edad":21}')
         self.codigo(L, "Crea coordenada como la tupla (10, 20).",
                     lambda e,c: e.get("coordenada")== (10,20) and type(e.get("coordenada")) is tuple,
                     "Usa paréntesis.")
@@ -323,24 +417,6 @@ condiciones que producen True o False.""")
         print(f"\nProgreso total: {hechas}/{total} ({pct:.1f}%)")
         print(f"Intentos registrados: {sum(self.intentos.values())}")
 
-    def guardar_reporte(self):
-        datos = {
-            **self.alumno,
-            "version": VERSION,
-            "inicio": self.inicio.isoformat(timespec="seconds"),
-            "ultima_actividad": datetime.now().isoformat(timespec="seconds"),
-            "lecciones_completadas": sorted(self.completadas),
-            "intentos_por_leccion": self.intentos,
-            "progreso_pct": round(100*len(self.completadas)/len(LESSONS),1),
-            "curso_completado": len(self.completadas)==len(LESSONS)
-        }
-        mat = self.alumno.get("matricula","sin_matricula").replace(" ","_")
-        archivo=f"progreso_python_{mat}.json"
-        with open(archivo,"w",encoding="utf-8") as f:
-            json.dump(datos,f,ensure_ascii=False,indent=2)
-        print(f"\n✓ Reporte local generado: {archivo}")
-        print("En una siguiente versión este mismo registro puede enviarse al registro central del profesor.")
-
     def menu(self):
         acciones = {
             "1": ("1.1 Introducción y operaciones", self.l11),
@@ -360,24 +436,27 @@ condiciones que producen True o False.""")
                 code=LESSONS[int(k)-1][0]
                 marca="✓" if code in self.completadas else " "
                 print(f"[{marca}] {k}. {nombre}")
-            print("\n[P] Ver progreso   [G] Generar reporte   [0] Salir")
+            print("\n[P] Ver progreso   [0] Salir")
             r=input("\nSelecciona una opción: ").strip().lower()
             if r=="0":
                 self.reporte()
+                self.guardar_remoto()
                 return
             if r=="p":
                 self.reporte(); input("\nEnter para continuar...")
-            elif r=="g":
-                self.guardar_reporte(); input("\nEnter para continuar...")
             elif r in acciones:
+                code = LESSONS[int(r)-1][0]
+                if code in self.completadas:
+                    repetir = input("Esta lección ya está completada. ¿Deseas repetirla? (s/n): ").strip().lower()
+                    if repetir != "s":
+                        continue
                 acciones[r][1](); input("\nEnter para volver al menú...")
             else:
                 print("Opción no válida.")
 
-_curso = None
 
-def iniciar_curso():
-    global _curso
-    _curso = Curso()
-    _curso.identificacion()
-    _curso.menu()
+def iniciar_curso(registro_url=None):
+    curso = Curso(registro_url=registro_url)
+    curso.identificacion()
+    curso.menu()
+    return curso
