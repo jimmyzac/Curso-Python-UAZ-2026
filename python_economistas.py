@@ -1,5 +1,5 @@
 """
-Curso interactivo de Python — v0.3
+Curso interactivo de Python — v0.4
 Persistencia opcional mediante Google Sheets + Apps Script Web App.
 """
 
@@ -8,7 +8,8 @@ import json
 import urllib.parse
 import urllib.request
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
+REGISTRO_URL_PREDETERMINADA = "https://script.google.com/macros/s/AKfycbwf6eJTMxSmTPHdMkTr-A1FJbh7gvSrvJxP8Jn8eZRaw6Q5zY-5ZPxtumf4lNOttL2hcw/exec"
 
 LESSONS = [
     ("1.1", "Introducción y operaciones básicas"),
@@ -22,6 +23,22 @@ LESSONS = [
     ("3.2", "pandas: DataFrame"),
     ("3.3", "pandas: slicing y filtrado"),
 ]
+
+
+class VolverAlMenu(Exception):
+    """Interrumpe una actividad y regresa al menú sin completarla."""
+    pass
+
+class SalirDelCurso(Exception):
+    """Finaliza el curso desde cualquier pregunta."""
+    pass
+
+def _comando_control(texto):
+    comando = str(texto).strip().upper()
+    if comando in {"MENU", "MENÚ"}:
+        raise VolverAlMenu()
+    if comando in {"SALIR", "0"}:
+        raise SalirDelCurso()
 
 class RegistroRemoto:
     def __init__(self, url=None):
@@ -75,7 +92,7 @@ class Curso:
         self.intentos = {}
         self.env = {"date": date, "datetime": datetime, "timedelta": timedelta}
         self.inicio = datetime.now()
-        self.registro = RegistroRemoto(registro_url)
+        self.registro = RegistroRemoto(registro_url or REGISTRO_URL_PREDETERMINADA)
 
     def titulo(self, texto):
         print("\n" + "=" * 68)
@@ -102,7 +119,9 @@ class Curso:
         n = 0
         validas = {str(v).strip().lower() for v in validas}
         while True:
-            r = input(pregunta + "\n>>> ").strip().lower()
+            r_raw = input(pregunta + "\n>>> ").strip()
+            _comando_control(r_raw)
+            r = r_raw.lower()
             self._intento(leccion)
             if r in validas:
                 print("✓ Correcto.\n")
@@ -117,6 +136,7 @@ class Curso:
         n = 0
         while True:
             codigo = input(pregunta + "\n>>> ").strip()
+            _comando_control(codigo)
             self._intento(leccion)
             try:
                 valor = eval(codigo, {"__builtins__": __builtins__}, self.env)
@@ -135,6 +155,7 @@ class Curso:
         n = 0
         while True:
             codigo = input(pregunta + "\n>>> ").strip()
+            _comando_control(codigo)
             self._intento(leccion)
             try:
                 exec(codigo, {"__builtins__": __builtins__}, self.env)
@@ -186,10 +207,23 @@ class Curso:
             texto = unicodedata.normalize("NFC", str(texto or ""))
             return " ".join(texto.strip().split()).upper()
 
-        self.alumno["nombre"] = normalizar(input("Nombre completo: "))
-        self.alumno["matricula"] = normalizar(input("Matrícula: "))
-        self.alumno["grupo"] = normalizar(input("Código del grupo: "))
-        self.alumno["periodo"] = normalizar(input("Periodo (ej. Ago-Dic 2026): "))
+        print("Puedes escribir SALIR o 0 para cerrar el curso.\n")
+
+        valor = input("Nombre completo: ")
+        _comando_control(valor)
+        self.alumno["nombre"] = normalizar(valor)
+
+        valor = input("Matrícula: ")
+        _comando_control(valor)
+        self.alumno["matricula"] = normalizar(valor)
+
+        valor = input("Código del grupo: ")
+        _comando_control(valor)
+        self.alumno["grupo"] = normalizar(valor)
+
+        valor = input("Periodo (ej. Ago-Dic 2026): ")
+        _comando_control(valor)
+        self.alumno["periodo"] = normalizar(valor)
 
         previo = self.registro.cargar(
             self.alumno["matricula"],
@@ -437,10 +471,12 @@ condiciones que producen True o False.""")
                 marca="✓" if code in self.completadas else " "
                 print(f"[{marca}] {k}. {nombre}")
             print("\n[P] Ver progreso   [0] Salir")
+            print("Dentro de una actividad: MENU = volver al menú | SALIR = cerrar curso")
             r=input("\nSelecciona una opción: ").strip().lower()
-            if r=="0":
+            if r in {"0", "salir"}:
                 self.reporte()
                 self.guardar_remoto()
+                print("\nCurso finalizado.")
                 return
             if r=="p":
                 self.reporte(); input("\nEnter para continuar...")
@@ -450,13 +486,31 @@ condiciones que producen True o False.""")
                     repetir = input("Esta lección ya está completada. ¿Deseas repetirla? (s/n): ").strip().lower()
                     if repetir != "s":
                         continue
-                acciones[r][1](); input("\nEnter para volver al menú...")
+                try:
+                    acciones[r][1]()
+                    input("\nEnter para volver al menú...")
+                except VolverAlMenu:
+                    self.guardar_remoto()
+                    print("\n↩ Regresando al menú. La lección no se marcó como completada.")
+                    continue
+                except SalirDelCurso:
+                    self.guardar_remoto()
+                    print("\n✓ Progreso guardado. Curso finalizado.")
+                    return
             else:
                 print("Opción no válida.")
 
 
 def iniciar_curso(registro_url=None):
     curso = Curso(registro_url=registro_url)
-    curso.identificacion()
-    curso.menu()
+    try:
+        curso.identificacion()
+        curso.menu()
+    except SalirDelCurso:
+        if curso.alumno.get("matricula"):
+            curso.guardar_remoto()
+        print("\nCurso finalizado.")
+    except VolverAlMenu:
+        # Durante el registro no existe todavía un menú utilizable.
+        print("\nRegistro cancelado. Curso finalizado.")
     return curso
