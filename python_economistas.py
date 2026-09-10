@@ -1,5 +1,5 @@
 """
-Curso interactivo de Python — v0.5
+Curso interactivo de Python — v0.7
 Persistencia opcional mediante Google Sheets + Apps Script Web App.
 """
 
@@ -8,7 +8,7 @@ import json
 import urllib.parse
 import urllib.request
 
-VERSION = "0.5.0"
+VERSION = "0.7.0"
 REGISTRO_URL_PREDETERMINADA = "https://script.google.com/macros/s/AKfycbwf6eJTMxSmTPHdMkTr-A1FJbh7gvSrvJxP8Jn8eZRaw6Q5zY-5ZPxtumf4lNOttL2hcw/exec"
 
 LESSONS = [
@@ -18,11 +18,29 @@ LESSONS = [
     ("1.4", "Listas"),
     ("1.5", "Librerías; funciones y métodos"),
     ("1.6", "Tuplas y diccionarios"),
-    ("2.0", "NumPy"),
+    ("2.0", "NumPy: arrays y operaciones vectorizadas"),
     ("3.1", "pandas: Series"),
     ("3.2", "pandas: DataFrame"),
     ("3.3", "pandas: slicing y filtrado"),
+    ("4.1", "Interés simple e interés compuesto"),
+    ("4.2", "Capitalización m veces al año"),
+    ("4.3", "Capitalización continua"),
+    ("4.4", "Tasas efectivas y equivalentes"),
+    ("4.5", "Valor presente"),
+    ("4.6", "Anualidades"),
+    ("4.7", "Perpetuidades"),
+    ("4.8", "Precio de bonos"),
+    ("4.9", "Precio de acciones"),
 ]
+
+MODULES = [
+    ("1", "Fundamentos de Python", ["1.1","1.2","1.3","1.4","1.5","1.6"]),
+    ("2", "NumPy", ["2.0"]),
+    ("3", "pandas", ["3.1","3.2","3.3"]),
+    ("4", "Python aplicado a Finanzas", ["4.1","4.2","4.3","4.4","4.5","4.6","4.7","4.8","4.9"]),
+]
+
+PRERREQUISITOS_FINANZAS = {"1.1","1.2","1.3","1.4","1.5","1.6","2.0","3.1","3.2","3.3"}
 
 
 class VolverAlMenu(Exception):
@@ -99,13 +117,26 @@ class Curso:
         print(texto.center(68))
         print("=" * 68)
 
-    def barra_progreso(self):
-        total = len(LESSONS)
-        hechas = len(self.completadas)
+    def barra_progreso(self, codigos=None):
+        codigos = codigos or [c for c, _ in LESSONS]
+        total = len(codigos)
+        hechas = sum(1 for c in codigos if c in self.completadas)
         ancho = 20
-        llenas = round(ancho * hechas / total)
+        llenas = round(ancho * hechas / total) if total else 0
         barra = "█" * llenas + "░" * (ancho - llenas)
-        return f"[{barra}] {hechas}/{total} ({100*hechas/total:.0f}%)"
+        porcentaje = 100 * hechas / total if total else 0
+        return f"[{barra}] {hechas}/{total} ({porcentaje:.0f}%)"
+
+    def finanzas_desbloqueadas(self):
+        return PRERREQUISITOS_FINANZAS.issubset(self.completadas)
+
+    def progreso_modulos(self):
+        for numero, nombre, codigos in MODULES:
+            estado = self.barra_progreso(codigos)
+            if numero == "4" and not self.finanzas_desbloqueadas():
+                print(f"🔒 MÓDULO {numero} · {nombre}: {estado}")
+            else:
+                print(f"   MÓDULO {numero} · {nombre}: {estado}")
 
     def siguiente_leccion(self):
         for code, name in LESSONS:
@@ -290,7 +321,19 @@ que aprenderemos es print(), que muestra información en pantalla.
 
 Python distingue entre mayúsculas y minúsculas: print y Print son nombres
 diferentes. También importa escribir correctamente paréntesis, comillas y
-operadores.""")
+operadores.
+
+Si ya trabajaste con Excel, observa una diferencia importante al escribir
+potencias:
+
+Operación             Excel                 Python
+--------------------------------------------------------
+5 elevado a 2         =5^2                  5**2
+(1+0.08) elevado a 5  =(1+0.08)^5           (1+0.08)**5
+
+En Excel usamos ^ para una potencia. En Python usamos **.
+El símbolo ^ en Python tiene otro significado y NO debe utilizarse como
+potencia.""")
         self.ejemplo('print("Hola Python")', "Hola Python")
         self.codigo(L, 'Escribe una instrucción que muestre: Hola Python',
                     lambda e,c: "print" in c and "Hola Python" in c,
@@ -483,6 +526,209 @@ condiciones que producen True o False.""")
                        'Usa tabla[tabla["edad"] > 20].')
         self.completar(L, "Aprendiste slicing con iloc y filtrado condicional.")
 
+
+    # ---------- Módulo 4: Python aplicado a Finanzas ----------
+    def l41(self):
+        L="4.1"; self.titulo("4.1 · INTERÉS SIMPLE E INTERÉS COMPUESTO")
+        self.explicar("""El interés permite medir cómo cambia el valor del dinero a través
+del tiempo.
+
+Con interés simple, los intereses se calculan únicamente sobre el capital
+inicial:
+
+    VF = VP(1 + r n)
+
+Con interés compuesto, los intereses generados se reinvierten:
+
+    VF = VP(1 + r)^n
+
+En Python, la potencia se escribe con **.""")
+        self.ejemplo("VP = 10000\nr = 0.08\nn = 5\nVF = VP * (1 + r)**n\nVF", "14693.28")
+        self.codigo(L, "Crea VP=10000, r=0.08 y n=5 en una sola línea separada por punto y coma.",
+                    lambda e,c: e.get("VP")==10000 and e.get("r")==0.08 and e.get("n")==5,
+                    "Ejemplo: VP=10000; r=0.08; n=5")
+        self.expresion(L, "Calcula el valor futuro con interés compuesto.",
+                       lambda v,c,e: abs(float(v)-14693.280768)<1e-6 and "**" in c,
+                       "Usa VP * (1 + r)**n.")
+        self.expresion(L, "Calcula el valor futuro con interés simple para los mismos datos.",
+                       lambda v,c,e: abs(float(v)-14000)<1e-6,
+                       "Usa VP * (1 + r*n).")
+        self.completar(L, "Distingues interés simple y compuesto y puedes calcular ambos en Python.")
+
+    def l42(self):
+        L="4.2"; self.titulo("4.2 · CAPITALIZACIÓN m VECES AL AÑO")
+        self.explicar("""Si una tasa nominal anual r se capitaliza m veces por año durante
+t años, el valor futuro es:
+
+    VF = VP(1 + r/m)^(m t)
+
+En Python:
+
+    VF = VP * (1 + r/m)**(m*t)
+
+Cuando m aumenta, la capitalización se aproxima al caso continuo.""")
+        self.ejemplo("VP=10000\nr=0.12\nm=12\nt=2\nVP*(1+r/m)**(m*t)", "12697.35")
+        self.codigo(L, "Crea m=12 y t=2.",
+                    lambda e,c: e.get("m")==12 and e.get("t")==2,
+                    "Puedes escribir m=12; t=2")
+        self.expresion(L, "Con VP=10000 y r=0.12, calcula VF con capitalización mensual durante 2 años.",
+                       lambda v,c,e: abs(float(v)-12697.3466)<0.02 and "/m" in c,
+                       "Usa VP * (1 + r/m)**(m*t).")
+        self.completar(L, "Aprendiste capitalización periódica m veces al año.")
+
+    def l43(self):
+        L="4.3"; self.titulo("4.3 · CAPITALIZACIÓN CONTINUA")
+        import math
+        self.env["math"] = math
+        self.explicar("""En capitalización continua, el número de periodos de capitalización
+tiende a infinito. La expresión es:
+
+    VF = VP e^(r t)
+
+En Python podemos usar math.exp():
+
+    VF = VP * math.exp(r*t)""")
+        self.ejemplo("import math\nVP=10000\nr=0.08\nt=5\nVP*math.exp(r*t)", "14918.25")
+        self.expresion(L, "Calcula el valor futuro continuo de VP=10000, r=0.08, t=5.",
+                       lambda v,c,e: abs(float(v)-14918.24698)<0.02 and "exp" in c,
+                       "Usa 10000 * math.exp(0.08*5).")
+        self.opcion(L, "¿Qué función representa e elevado a x?\nA) math.exp(x)   B) math.log(x)   C) math.sqrt(x)",
+                    ["a","math.exp(x)"], "La función se llama exp.")
+        self.completar(L, "Aprendiste a trabajar con capitalización continua mediante math.exp().")
+
+    def l44(self):
+        L="4.4"; self.titulo("4.4 · TASAS EFECTIVAS Y EQUIVALENTES")
+        self.explicar("""Una tasa nominal r capitalizable m veces al año puede transformarse
+en tasa efectiva anual:
+
+    TEA = (1 + r/m)^m - 1
+
+Dos tasas son equivalentes cuando producen el mismo factor de acumulación
+durante el mismo horizonte.""")
+        self.ejemplo("r=0.12\nm=12\ntea=(1+r/m)**m - 1\ntea", "0.126825...")
+        self.codigo(L, "Crea r_nominal=0.12 y m_anual=12.",
+                    lambda e,c: e.get("r_nominal")==0.12 and e.get("m_anual")==12,
+                    "Usa r_nominal=0.12; m_anual=12")
+        self.expresion(L, "Calcula la tasa efectiva anual.",
+                       lambda v,c,e: abs(float(v)-0.12682503)<1e-6,
+                       "Usa (1+r_nominal/m_anual)**m_anual - 1.")
+        self.completar(L, "Puedes convertir una tasa nominal capitalizable a tasa efectiva anual.")
+
+    def l45(self):
+        L="4.5"; self.titulo("4.5 · VALOR PRESENTE")
+        self.explicar("""El valor presente permite traer un flujo futuro al día de hoy.
+
+Si recibiremos VF dentro de n periodos y la tasa por periodo es r:
+
+    VP = VF / (1 + r)^n
+
+Es el proceso inverso de la capitalización.""")
+        self.ejemplo("VF=15000\nr=0.10\nn=3\nVP=VF/(1+r)**n\nVP", "11269.72")
+        self.codigo(L, "Crea VF=15000, r=0.10 y n=3.",
+                    lambda e,c: e.get("VF")==15000 and e.get("r")==0.10 and e.get("n")==3,
+                    "Usa VF=15000; r=0.10; n=3")
+        self.expresion(L, "Calcula el valor presente.",
+                       lambda v,c,e: abs(float(v)-11269.7220)<0.02 and "/" in c,
+                       "Usa VF / (1 + r)**n.")
+        self.completar(L, "Aprendiste a descontar flujos futuros mediante valor presente.")
+
+    def l46(self):
+        L="4.6"; self.titulo("4.6 · ANUALIDADES")
+        self.explicar("""Una anualidad ordinaria consiste en pagos iguales C al final de cada
+periodo. Su valor presente es:
+
+    VP = C * (1 - 1/(1+r)^n) / r
+
+Y su valor futuro:
+
+    VF = C * ((1+r)^n - 1) / r
+
+Estas fórmulas aparecen en préstamos, créditos, ahorro periódico y valuación
+de flujos regulares.""")
+        self.ejemplo("C=5000\nr=0.01\nn=24\nVP=C*(1-1/(1+r)**n)/r\nVP", "106216.94 aprox.")
+        self.codigo(L, "Crea C=5000, r=0.01 y n=24.",
+                    lambda e,c: e.get("C")==5000 and e.get("r")==0.01 and e.get("n")==24,
+                    "Usa C=5000; r=0.01; n=24")
+        esperado_vp = 5000*(1-1/(1+0.01)**24)/0.01
+        esperado_vf = 5000*((1+0.01)**24-1)/0.01
+        self.expresion(L, "Calcula el valor presente de la anualidad.",
+                       lambda v,c,e,ev=esperado_vp: abs(float(v)-ev)<0.02,
+                       "Usa C*(1-1/(1+r)**n)/r.")
+        self.expresion(L, "Calcula el valor futuro de la anualidad.",
+                       lambda v,c,e,ev=esperado_vf: abs(float(v)-ev)<0.02,
+                       "Usa C*((1+r)**n-1)/r.")
+        self.completar(L, "Aprendiste valor presente y valor futuro de una anualidad ordinaria.")
+
+    def l47(self):
+        L="4.7"; self.titulo("4.7 · PERPETUIDADES")
+        self.explicar("""Una perpetuidad es una corriente de pagos constantes que continúa
+indefinidamente. Si el primer pago C ocurre dentro de un periodo:
+
+    VP = C / r
+
+Si los pagos crecen a una tasa constante g:
+
+    VP = C1 / (r - g)
+
+siempre que r > g.""")
+        self.ejemplo("C=1000\nr=0.08\nVP=C/r\nVP", "12500.0")
+        self.codigo(L, "Crea C=1000 y r=0.08.",
+                    lambda e,c: e.get("C")==1000 and e.get("r")==0.08,
+                    "Usa C=1000; r=0.08")
+        self.expresion(L, "Calcula el valor presente de la perpetuidad.",
+                       lambda v,c,e: abs(float(v)-12500)<1e-6,
+                       "Usa C/r.")
+        self.expresion(L, "Si C1=1000, r=0.10 y g=0.04, calcula una perpetuidad creciente.",
+                       lambda v,c,e: abs(float(v)-16666.6667)<0.02,
+                       "Usa 1000/(0.10-0.04).")
+        self.completar(L, "Aprendiste perpetuidades constantes y crecientes.")
+
+    def l48(self):
+        L="4.8"; self.titulo("4.8 · PRECIO DE BONOS")
+        self.explicar("""El precio de un bono es el valor presente de sus cupones más el valor
+presente de su valor nominal.
+
+Para un bono con cupón C, valor nominal VN, rendimiento r y n periodos:
+
+    P = sum(C/(1+r)^t, t=1,...,n) + VN/(1+r)^n
+
+Python permite expresar esta suma con sum() y range().""")
+        self.ejemplo("C=80\nVN=1000\nr=0.10\nn=3\nP=sum(C/(1+r)**t for t in range(1,n+1)) + VN/(1+r)**n", "950.26 aprox.")
+        self.codigo(L, "Crea C=80, VN=1000, r=0.10 y n=3.",
+                    lambda e,c: e.get("C")==80 and e.get("VN")==1000 and e.get("r")==0.10 and e.get("n")==3,
+                    "Usa C=80; VN=1000; r=0.10; n=3")
+        esperado = sum(80/(1+0.10)**t for t in range(1,4)) + 1000/(1+0.10)**3
+        self.expresion(L, "Calcula el precio del bono usando sum() y range().",
+                       lambda v,c,e,ev=esperado: abs(float(v)-ev)<0.02 and "sum" in c and "range" in c,
+                       "Usa sum(C/(1+r)**t for t in range(1,n+1)) + VN/(1+r)**n.")
+        self.opcion(L, "Si el cupón es menor que el rendimiento requerido, normalmente el bono cotiza:\nA) Sobre par   B) Bajo par   C) Exactamente a par",
+                    ["b","bajo par"], "Compara la tasa cupón con el rendimiento requerido.")
+        self.completar(L, "Puedes valuar un bono descontando cupones y valor nominal.")
+
+    def l49(self):
+        L="4.9"; self.titulo("4.9 · PRECIO DE ACCIONES")
+        self.explicar("""Una acción puede valuarse como el valor presente de los dividendos
+esperados. En el modelo de Gordon, si el dividendo del próximo periodo es D1,
+la tasa requerida es r y el crecimiento perpetuo es g:
+
+    P0 = D1 / (r - g)
+
+con r > g.
+
+También podemos valorar una acción durante un horizonte finito descontando
+dividendos y un precio esperado de venta.""")
+        self.ejemplo("D1=5\nr=0.12\ng=0.04\nP0=D1/(r-g)\nP0", "62.5")
+        self.codigo(L, "Crea D1=5, r=0.12 y g=0.04.",
+                    lambda e,c: e.get("D1")==5 and e.get("r")==0.12 and e.get("g")==0.04,
+                    "Usa D1=5; r=0.12; g=0.04")
+        self.expresion(L, "Calcula el precio de la acción con el modelo de Gordon.",
+                       lambda v,c,e: abs(float(v)-62.5)<1e-6,
+                       "Usa D1/(r-g).")
+        self.expresion(L, "Si D1=4, D2=4.2, P2=55 y r=0.10, calcula P0 descontando los tres flujos.",
+                       lambda v,c,e: abs(float(v)-(4/1.1 + (4.2+55)/(1.1**2)))<0.02,
+                       "Usa 4/(1.10) + (4.2+55)/(1.10**2).")
+        self.completar(L, "Aprendiste valoración básica de acciones por dividendos.")
+
     def reporte(self):
         total=len(LESSONS); hechas=len(self.completadas)
         pct=100*hechas/total
@@ -494,53 +740,89 @@ condiciones que producen True o False.""")
         for code,name in LESSONS:
             marca="✓" if code in self.completadas else "○"
             print(f"{marca} {code} {name}")
-        print(f"\nProgreso total: {hechas}/{total} ({pct:.1f}%)")
-        print(f"Intentos registrados: {sum(self.intentos.values())}")
+        print(f"\nProgreso general: {hechas}/{total} ({pct:.1f}%)\n")
+        self.progreso_modulos()
+        print(f"\nIntentos registrados: {sum(self.intentos.values())}")
 
     def menu(self):
         acciones = {
-            "1": ("1.1 Introducción y operaciones", self.l11),
-            "2": ("1.2 Strings y numéricos", self.l12),
-            "3": ("1.3 Fechas y tiempo", self.l13),
-            "4": ("1.4 Listas", self.l14),
-            "5": ("1.5 Librerías, funciones y métodos", self.l15),
-            "6": ("1.6 Tuplas y diccionarios", self.l16),
-            "7": ("2.0 NumPy", self.l20),
-            "8": ("3.1 pandas: Series", self.l31),
-            "9": ("3.2 pandas: DataFrame", self.l32),
-            "10": ("3.3 pandas: slicing y filtrado", self.l33),
+            "1": ("1.1 Introducción y operaciones", self.l11, "1.1"),
+            "2": ("1.2 Strings y numéricos", self.l12, "1.2"),
+            "3": ("1.3 Fechas y tiempo", self.l13, "1.3"),
+            "4": ("1.4 Listas", self.l14, "1.4"),
+            "5": ("1.5 Librerías, funciones y métodos", self.l15, "1.5"),
+            "6": ("1.6 Tuplas y diccionarios", self.l16, "1.6"),
+            "7": ("2.0 NumPy", self.l20, "2.0"),
+            "8": ("3.1 pandas: Series", self.l31, "3.1"),
+            "9": ("3.2 pandas: DataFrame", self.l32, "3.2"),
+            "10": ("3.3 pandas: slicing y filtrado", self.l33, "3.3"),
+            "11": ("4.1 Interés simple e interés compuesto", self.l41, "4.1"),
+            "12": ("4.2 Capitalización m veces al año", self.l42, "4.2"),
+            "13": ("4.3 Capitalización continua", self.l43, "4.3"),
+            "14": ("4.4 Tasas efectivas y equivalentes", self.l44, "4.4"),
+            "15": ("4.5 Valor presente", self.l45, "4.5"),
+            "16": ("4.6 Anualidades", self.l46, "4.6"),
+            "17": ("4.7 Perpetuidades", self.l47, "4.7"),
+            "18": ("4.8 Precio de bonos", self.l48, "4.8"),
+            "19": ("4.9 Precio de acciones", self.l49, "4.9"),
         }
+
         while True:
             self.titulo("MENÚ DEL CURSO")
-            print("Progreso:", self.barra_progreso())
+            print("PROGRESO GENERAL:", self.barra_progreso())
+            print()
+            self.progreso_modulos()
+
             code_sig, name_sig = self.siguiente_leccion()
             if code_sig:
-                print(f"Siguiente sugerida: {code_sig} · {name_sig}")
+                if code_sig.startswith("4.") and not self.finanzas_desbloqueadas():
+                    print("\nCompleta los módulos 1, 2 y 3 para desbloquear Finanzas.")
+                else:
+                    print(f"\nSiguiente sugerida: {code_sig} · {name_sig}")
             else:
-                print("✓ Curso completado")
-            print()
-            for k,(nombre,_) in acciones.items():
-                code=LESSONS[int(k)-1][0]
+                print("\n✓ Curso completado")
+
+            print("\n" + "-" * 68)
+            for k,(nombre,_,code) in acciones.items():
                 marca="✓" if code in self.completadas else " "
-                print(f"[{marca}] {k}. {nombre}")
+                if code.startswith("4.") and not self.finanzas_desbloqueadas():
+                    print(f"[🔒] {k}. {nombre}")
+                else:
+                    print(f"[{marca}] {k}. {nombre}")
+
             print("\n[P] Ver progreso   [0] Salir")
             print("Dentro de una actividad: MENU = volver al menú | SALIR = cerrar curso")
             r=input("\nSelecciona una opción: ").strip().lower()
+
             if r in {"0", "salir"}:
                 self.reporte()
                 self.guardar_remoto()
                 print("\nCurso finalizado.")
                 return
+
             if r=="p":
-                self.reporte(); input("\nEnter para continuar...")
-            elif r in acciones:
-                code = LESSONS[int(r)-1][0]
+                self.reporte()
+                input("\nEnter para continuar...")
+                continue
+
+            if r in acciones:
+                nombre, funcion, code = acciones[r]
+
+                if code.startswith("4.") and not self.finanzas_desbloqueadas():
+                    faltantes = [c for c in sorted(PRERREQUISITOS_FINANZAS) if c not in self.completadas]
+                    print("\n🔒 MÓDULO 4 BLOQUEADO")
+                    print("Para acceder a Finanzas debes completar primero los módulos 1, 2 y 3.")
+                    print("Lecciones pendientes:", ", ".join(faltantes))
+                    input("\nEnter para volver al menú...")
+                    continue
+
                 if code in self.completadas:
                     repetir = input("Esta lección ya está completada. ¿Deseas repetirla? (s/n): ").strip().lower()
                     if repetir != "s":
                         continue
+
                 try:
-                    acciones[r][1]()
+                    funcion()
                     input("\nEnter para volver al menú...")
                 except VolverAlMenu:
                     self.guardar_remoto()
