@@ -1,5 +1,5 @@
 """
-Curso interactivo de Python — v0.7
+Curso interactivo de Python — v0.8
 Persistencia opcional mediante Google Sheets + Apps Script Web App.
 """
 
@@ -8,7 +8,7 @@ import json
 import urllib.parse
 import urllib.request
 
-VERSION = "0.7.0"
+VERSION = "0.8.0"
 REGISTRO_URL_PREDETERMINADA = "https://script.google.com/macros/s/AKfycbwf6eJTMxSmTPHdMkTr-A1FJbh7gvSrvJxP8Jn8eZRaw6Q5zY-5ZPxtumf4lNOttL2hcw/exec"
 
 LESSONS = [
@@ -107,7 +107,12 @@ class Curso:
     def __init__(self, registro_url=None):
         self.alumno = {}
         self.completadas = set()
+        # intentos: historial general para el reporte del alumno/profesor.
         self.intentos = {}
+        # Estos dos contadores se usan para la calificación privada.
+        # Solo acumulan mientras la lección aún NO ha sido completada.
+        self.intentos_calificables = {}
+        self.actividades_resueltas = {}
         self.env = {"date": date, "datetime": datetime, "timedelta": timedelta}
         self.inicio = datetime.now()
         self.registro = RegistroRemoto(registro_url or REGISTRO_URL_PREDETERMINADA)
@@ -161,7 +166,23 @@ class Curso:
         print()
 
     def _intento(self, leccion):
+        # Historial total de intentos.
         self.intentos[leccion] = self.intentos.get(leccion, 0) + 1
+
+        # Intentos usados para calificación: dejan de cambiar cuando la
+        # lección ya fue completada. Así repetir una lección no altera la nota.
+        if leccion not in self.completadas:
+            self.intentos_calificables[leccion] = (
+                self.intentos_calificables.get(leccion, 0) + 1
+            )
+
+    def _actividad_correcta(self, leccion):
+        # Cuenta automáticamente cada actividad superada. No hay que mantener
+        # manualmente un catálogo del número de preguntas por lección.
+        if leccion not in self.completadas:
+            self.actividades_resueltas[leccion] = (
+                self.actividades_resueltas.get(leccion, 0) + 1
+            )
 
     def opcion(self, leccion, pregunta, validas, pista=None):
         n = 0
@@ -172,6 +193,7 @@ class Curso:
             r = r_raw.lower()
             self._intento(leccion)
             if r in validas:
+                self._actividad_correcta(leccion)
                 print("✓ Correcto.\n")
                 return
             n += 1
@@ -189,6 +211,7 @@ class Curso:
             try:
                 valor = eval(codigo, {"__builtins__": __builtins__}, self.env)
                 if verificador(valor, codigo, self.env):
+                    self._actividad_correcta(leccion)
                     print(f"✓ Correcto. Resultado: {valor}\n")
                     return valor
                 print(f"✗ La expresión se ejecutó, pero produjo {valor!r}.")
@@ -208,6 +231,7 @@ class Curso:
             try:
                 exec(codigo, {"__builtins__": __builtins__}, self.env)
                 if verificador(self.env, codigo):
+                    self._actividad_correcta(leccion)
                     print("✓ Correcto.\n")
                     return
                 print("✗ El código se ejecutó, pero no cumple lo solicitado.")
@@ -226,6 +250,8 @@ class Curso:
             "ultima_actividad": datetime.now().isoformat(timespec="seconds"),
             "lecciones_completadas": sorted(self.completadas),
             "intentos_por_leccion": self.intentos,
+            "intentos_calificables_por_leccion": self.intentos_calificables,
+            "actividades_por_leccion": self.actividades_resueltas,
             "progreso_pct": round(100 * len(self.completadas) / len(LESSONS), 1),
             "curso_completado": len(self.completadas) == len(LESSONS),
         }
