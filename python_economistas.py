@@ -370,7 +370,7 @@ potencia.""")
 
 +  suma       -  resta
 *  producto   /  división
-** potencia
+** elevar a potencia
 
 Los paréntesis permiten controlar el orden de las operaciones.""")
         self.ejemplo("(10 + 5) * 2", 30)
