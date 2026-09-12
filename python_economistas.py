@@ -395,7 +395,7 @@ tipo entero (int) y los números con decimales al tipo float.
 
 Una variable es un nombre que referencia un objeto. El signo = asigna un
 objeto a una variable.""")
-        self.ejemplo('universidad = "UAZ"\ntype(universidad)', "<class 'str'>")
+        self.ejemplo('universidad = "UAZ"")
         self.codigo(L, 'Crea un objeto llamado mi_estado con el texto "Zacatecas".',
                     lambda e,c: e.get("mi_estado")=="Zacatecas" and type(e.get("mi_estado")) is str,
                     'Escribe mi_estado = "Zacatecas".')
