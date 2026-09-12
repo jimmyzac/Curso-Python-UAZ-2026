@@ -340,7 +340,7 @@ class Curso:
     # ---------- Lecciones ----------
     def l11(self):
         L="1.1"; self.titulo("1.1 · INTRODUCCIÓN Y OPERACIONES BÁSICAS")
-        self.explicar("""Python es un lenguaje de programación interpretado. En un cuaderno
+        self.explicar("""Python es un lenguaje de programación orientado a objetos (POO). En un cuaderno
 como Google Colab escribimos instrucciones en celdas y Python las ejecuta de
 arriba hacia abajo.
 
@@ -389,27 +389,27 @@ después de # en esa línea. Los comentarios sirven para documentar el código."
 
     def l12(self):
         L="1.2"; self.titulo("1.2 · OBJETOS: STRINGS Y NUMÉRICOS")
-        self.explicar("""En Python trabajamos con objetos. Un string (str) representa texto
+        self.explicar("""En Python ub objeto de tipo string (str) representa texto
 y se escribe normalmente entre comillas. Los números enteros pertenecen al
-tipo int y los números con decimales al tipo float.
+tipo entero (int) y los números con decimales al tipo float.
 
 Una variable es un nombre que referencia un objeto. El signo = asigna un
 objeto a una variable.""")
         self.ejemplo('universidad = "UAZ"\ntype(universidad)', "<class 'str'>")
-        self.codigo(L, 'Crea universidad con el texto "UAZ".',
-                    lambda e,c: e.get("universidad")=="UAZ" and type(e.get("universidad")) is str,
-                    'Escribe universidad = "UAZ".')
-        self.expresion(L, "Consulta el tipo de universidad con type().",
-                       lambda v,c,e: v is str, "Usa type(universidad).")
+        self.codigo(L, 'Crea un objeto llamado mi_estado con el texto "Zacatecas".',
+                    lambda e,c: e.get("mi_estado")=="Zacatecas" and type(e.get("mi_estado")) is str,
+                    'Escribe mi_estado = "Zacatecas".')
+        self.expresion(L, "Consulta el tipo de objeto mi_estado con type().",
+                       lambda v,c,e: v is str, "Usa type(mi_estado).")
         self.codigo(L, "Crea edad con el entero 20.",
                     lambda e,c: e.get("edad")==20 and type(e.get("edad")) is int,
                     "No uses comillas ni decimal.")
-        self.codigo(L, "Crea tasa con el valor decimal 0.08.",
-                    lambda e,c: e.get("tasa")==0.08 and type(e.get("tasa")) is float,
-                    "Escribe tasa = 0.08.")
+        self.codigo(L, "Crea tasa_interes con el valor decimal 0.08.",
+                    lambda e,c: e.get("tasa_interes")==0.08 and type(e.get("tasa_interes")) is float,
+                    "Escribe tasa_interes = 0.08.")
         self.explicar("""El operador + depende del tipo de objeto. Con números suma;
-con strings concatena texto. Por eso 2 + 3 produce 5, mientras que
-"2" + "3" produce "23".""")
+con strings pega texto. Por eso 2 + 3 produce 5, mientras que
+"mi" + "casa" produce "mi_casa".""")
         self.expresion(L, 'Concatena "Eco" y "nomía" usando +.',
                        lambda v,c,e: v=="Economía" and "+" in c,
                        'Escribe "Eco" + "nomía".')
@@ -434,17 +434,17 @@ timedelta; su atributo .days devuelve el número de días.""")
     def l14(self):
         L="1.4"; self.titulo("1.4 · LISTAS")
         self.explicar("""Una lista almacena varios objetos y se escribe con corchetes.
-Python comienza a contar los índices desde cero: el primer elemento tiene
-índice 0, el segundo índice 1, etc. Las listas son mutables.""")
+Python comienza a contar los objetos desde cero: el primer elemento tiene
+posición 0, el segundo posición 1, etc. Las listas son mutables.""")
         self.ejemplo("numeros = [10, 20, 30]\nnumeros[0]", 10)
         self.codigo(L, "Crea numeros = [10, 20, 30].",
                     lambda e,c: e.get("numeros")==[10,20,30],
                     "Usa corchetes.")
-        self.expresion(L, "Obtén el segundo elemento de numeros mediante su índice.",
-                       lambda v,c,e: v==20 and "[" in c, "El segundo índice es 1.")
+        self.expresion(L, "Obtén el segundo elemento de numeros mediante su posición.",
+                       lambda v,c,e: v==20 and "[" in c, "El segundo elemento tiene posición 1.")
         self.explicar("""append() es un método de las listas. Agrega un elemento al final.
 Por ejemplo: numeros.append(40).""")
-        self.codigo(L, "Agrega 40 al final de numeros usando append().",
+        self.codigo(L, "Agrega 40 al final de lista numeros usando append().",
                     lambda e,c: e.get("numeros")==[10,20,30,40] and ".append" in c,
                     "Usa numeros.append(40).")
         self.completar(L, "Aprendiste creación, índices, mutabilidad y append().")
@@ -453,10 +453,10 @@ Por ejemplo: numeros.append(40).""")
         L="1.5"; self.titulo("1.5 · LIBRERÍAS, FUNCIONES Y MÉTODOS")
         self.explicar("""Una librería o módulo contiene herramientas reutilizables.
 Se carga mediante import. Una función puede recibir un objeto:
-len(texto). Un método pertenece a un objeto y usa punto:
-texto.upper().
+len(objeto). Un método pertenece a un objeto y usa punto:
+objeto.upper().
 
-Esta diferencia será muy importante en NumPy y pandas.""")
+Esta diferencia será muy importante en NumPy y pandas; dos de las librerias más usadas en Python.""")
         self.ejemplo('texto = "python"\nlen(texto)\ntexto.upper()', "6\n'PYTHON'")
         self.expresion(L, 'Obtén la longitud de "economia" usando len().',
                        lambda v,c,e: v==8 and "len" in c, "Usa len(...).")
@@ -488,7 +488,7 @@ clave: valor y se escribe con llaves.""")
         import numpy as np
         self.env["np"]=np
         self.explicar("""NumPy es una librería especializada en cálculo numérico.
-Su estructura fundamental es el array. A diferencia de una lista ordinaria,
+Su estructura fundamental es el array (arreglo). A diferencia de una lista ordinaria,
 un array facilita operaciones vectorizadas sobre todos sus elementos.""")
         self.ejemplo("import numpy as np\nx = np.array([1, 2, 3])\nx * 2", "[2 4 6]")
         self.codigo(L, "Crea datos como un array con 1, 2, 3 y 4.",
@@ -578,23 +578,23 @@ del tiempo.
 Con interés simple, los intereses se calculan únicamente sobre el capital
 inicial:
 
-    VF = VP(1 + r n)
+    Saldo_final = Principal (1 + i t)
 
 Con interés compuesto, los intereses generados se reinvierten:
 
-    VF = VP(1 + r)^n
+    Saldo_final = Principal (1 + i)^t
 
 En Python, la potencia se escribe con **.""")
-        self.ejemplo("VP = 10000\nr = 0.08\nn = 5\nVF = VP * (1 + r)**n\nVF", "14693.28")
-        self.codigo(L, "Crea VP=10000, r=0.08 y n=5 en una sola línea separada por punto y coma.",
-                    lambda e,c: e.get("VP")==10000 and e.get("r")==0.08 and e.get("n")==5,
-                    "Ejemplo: VP=10000; r=0.08; n=5")
-        self.expresion(L, "Calcula el valor futuro con interés compuesto.",
+        self.ejemplo("Principal = 10000\ni = 0.08\nt = 5\nSaldo_final = Principal * (1 + i)**t\nSaldo_final", "14693.28")
+        self.codigo(L, "Crea P=10000, i=0.08 y t=5 en una sola línea separada por punto y coma.",
+                    lambda e,c: e.get("P")==10000 and e.get("i")==0.08 and e.get("t")==5,
+                    "Ejemplo: P=10000; i=0.08; t=5")
+        self.expresion(L, "Calcula el Saldo Final con interés compuesto.",
                        lambda v,c,e: abs(float(v)-14693.280768)<1e-6 and "**" in c,
-                       "Usa VP * (1 + r)**n.")
-        self.expresion(L, "Calcula el valor futuro con interés simple para los mismos datos.",
+                       "Usa P * (1 + i)**t.")
+        self.expresion(L, "Calcula el saldo final con interés simple para los mismos datos.",
                        lambda v,c,e: abs(float(v)-14000)<1e-6,
-                       "Usa VP * (1 + r*n).")
+                       "Usa P * (1 + i*t).")
         vp_i, r_i, n_i = self.datos_individuales("4.1-final")
         objetivo_i = vp_i * (1 + r_i)**n_i
         self.explicar(f"""RETO INDIVIDUAL
