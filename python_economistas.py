@@ -299,7 +299,7 @@ class Curso:
         _comando_control(valor)
         self.alumno["matricula"] = normalizar(valor)
 
-        valor = input("Código del grupo: ")
+        valor = input("Grupo (ej. 2A): ")
         _comando_control(valor)
         self.alumno["grupo"] = normalizar(valor)
 
