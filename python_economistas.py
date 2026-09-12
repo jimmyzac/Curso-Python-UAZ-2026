@@ -418,18 +418,75 @@ con strings pega texto. Por eso 2 + 3 produce 5, mientras que
         self.completar(L, "Aprendiste str, int, float, variables, = y type().")
 
     def l13(self):
-        L="1.3"; self.titulo("1.3 · VARIABLES DE TIEMPO Y FECHA")
-        self.explicar("""El módulo datetime permite representar fechas y tiempo.
-date(año, mes, día) crea una fecha. Restar dos fechas produce un objeto
-timedelta; su atributo .days devuelve el número de días.""")
-        self.ejemplo("fecha = date(2026, 9, 15)", "2026-09-15")
-        self.codigo(L, "Crea fecha_clase con el 15 de septiembre de 2026.",
-                    lambda e,c: e.get("fecha_clase")==date(2026,9,15),
-                    "Usa date(2026, 9, 15).")
-        self.expresion(L, "Calcula los días entre date(2026,9,20) y date(2026,9,15), usando .days.",
-                       lambda v,c,e: v==5 and ".days" in c,
-                       "Resta las fechas entre paréntesis y agrega .days.")
-        self.completar(L, "Aprendiste date(), timedelta y operaciones sencillas con fechas.")
+    L="1.3"
+    self.titulo("1.3 · VARIABLES DE TIEMPO Y FECHA")
+
+    self.explicar("""El módulo datetime permite trabajar con fechas.
+
+date(año, mes, día) crea una fecha.
+
+Por ejemplo:
+    fecha = date(2026, 5, 10)
+
+representa el 10 de mayo de 2026.
+
+También podemos restar dos fechas. El resultado de la resta no es
+directamente un número, sino un objeto llamado timedelta, que representa
+una duración o diferencia de tiempo.
+
+Por ejemplo:
+    diferencia = date(2026, 5, 10) - date(2026, 5, 15)
+
+El resultado representa una diferencia de 5 días.
+
+Para obtener únicamente el número de días usamos .days:
+
+    diferencia.days
+
+El punto (.) permite acceder a una propiedad del objeto. En este caso,
+.days nos devuelve cuántos días contiene la diferencia entre las fechas.
+
+También podemos hacerlo directamente:
+
+    (date(2026, 9, 20) - date(2026, 9, 15)).days
+
+Resultado:
+    5
+""")
+
+    self.ejemplo(
+        "fecha = date(2026, 5, 15)",
+        "2026-09-15"
+    )
+
+    self.ejemplo(
+        "diferencia = date(2026, 5, 10) - date(2026, 5, 15)",
+        "5 days, 0:00:00"
+    )
+
+    self.ejemplo(
+        "diferencia.days",
+        "5"
+    )
+
+    self.codigo(
+        L,
+        "Crea fecha_clase con el 15 de septiembre de 2026.",
+        lambda e,c: e.get("fecha_clase") == date(2026,9,15),
+        "Usa date(2026, 9, 15)."
+    )
+
+    self.expresion(
+        L,
+        "Calcula los días entre date(2026,9,21) y date(2026,9,16), usando .days.",
+        lambda v,c,e: v == 5 and ".days" in c,
+        "Primero resta las dos fechas entre paréntesis y después agrega .days."
+    )
+
+    self.completar(
+        L,
+        "Aprendiste date(), timedelta, resta de fechas y el uso de .days."
+    )
 
     def l14(self):
         L="1.4"; self.titulo("1.4 · LISTAS")
