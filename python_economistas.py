@@ -1,5 +1,5 @@
 """
-Curso interactivo de Python — v1.0
+Curso interactivo de Python — v1.1
 Persistencia opcional mediante Google Sheets + Apps Script Web App.
 """
 
@@ -10,7 +10,7 @@ import random
 import urllib.parse
 import urllib.request
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 REGISTRO_URL_PREDETERMINADA = "https://script.google.com/macros/s/AKfycbwf6eJTMxSmTPHdMkTr-A1FJbh7gvSrvJxP8Jn8eZRaw6Q5zY-5ZPxtumf4lNOttL2hcw/exec"
 
 LESSONS = [
@@ -418,10 +418,10 @@ con strings pega texto. Por eso 2 + 3 produce 5, mientras que
         self.completar(L, "Aprendiste str, int, float, variables, = y type().")
 
     def l13(self):
-    L="1.3"
-    self.titulo("1.3 · VARIABLES DE TIEMPO Y FECHA")
+        L="1.3"
+        self.titulo("1.3 · VARIABLES DE TIEMPO Y FECHA")
 
-    self.explicar("""El módulo datetime permite trabajar con fechas.
+        self.explicar("""El módulo datetime permite trabajar con fechas.
 
 date(año, mes, día) crea una fecha.
 
@@ -430,21 +430,18 @@ Por ejemplo:
 
 representa el 10 de mayo de 2026.
 
-También podemos restar dos fechas. El resultado de la resta no es
-directamente un número, sino un objeto llamado timedelta, que representa
-una duración o diferencia de tiempo.
+También podemos restar dos fechas. El resultado es un objeto timedelta,
+que representa una duración o diferencia de tiempo.
 
 Por ejemplo:
-    diferencia = date(2026, 5, 10) - date(2026, 5, 15)
-
-El resultado representa una diferencia de 5 días.
+    diferencia = date(2026, 5, 15) - date(2026, 5, 10)
 
 Para obtener únicamente el número de días usamos .days:
 
     diferencia.days
 
 El punto (.) permite acceder a una propiedad del objeto. En este caso,
-.days nos devuelve cuántos días contiene la diferencia entre las fechas.
+.days devuelve cuántos días contiene la diferencia entre las fechas.
 
 También podemos hacerlo directamente:
 
@@ -454,39 +451,39 @@ Resultado:
     5
 """)
 
-    self.ejemplo(
-        "fecha = date(2026, 5, 15)",
-        "2026-09-15"
-    )
+        self.ejemplo(
+            "fecha = date(2026, 5, 15)",
+            "2026-05-15"
+        )
 
-    self.ejemplo(
-        "diferencia = date(2026, 5, 10) - date(2026, 5, 15)",
-        "5 days, 0:00:00"
-    )
+        self.ejemplo(
+            "diferencia = date(2026, 5, 15) - date(2026, 5, 10)",
+            "5 days, 0:00:00"
+        )
 
-    self.ejemplo(
-        "diferencia.days",
-        "5"
-    )
+        self.ejemplo(
+            "diferencia.days",
+            "5"
+        )
 
-    self.codigo(
-        L,
-        "Crea fecha_clase con el 15 de septiembre de 2026.",
-        lambda e,c: e.get("fecha_clase") == date(2026,9,15),
-        "Usa date(2026, 9, 15)."
-    )
+        self.codigo(
+            L,
+            "Crea fecha_clase con el 15 de septiembre de 2026.",
+            lambda e,c: e.get("fecha_clase") == date(2026,9,15),
+            "Usa date(2026, 9, 15)."
+        )
 
-    self.expresion(
-        L,
-        "Calcula los días entre date(2026,9,21) y date(2026,9,16), usando .days.",
-        lambda v,c,e: v == 5 and ".days" in c,
-        "Primero resta las dos fechas entre paréntesis y después agrega .days."
-    )
+        self.expresion(
+            L,
+            "Calcula los días entre date(2026,9,21) y date(2026,9,16), usando .days.",
+            lambda v,c,e: v == 5 and ".days" in c,
+            "Resta la fecha más reciente menos la anterior y después agrega .days."
+        )
 
-    self.completar(
-        L,
-        "Aprendiste date(), timedelta, resta de fechas y el uso de .days."
-    )
+        self.completar(
+            L,
+            "Aprendiste date(), timedelta, resta de fechas y el uso de .days."
+        )
 
     def l14(self):
         L="1.4"; self.titulo("1.4 · LISTAS")
@@ -616,7 +613,7 @@ condiciones que producen True o False.""")
                            tasa_min=5, tasa_max=14, n_min=2, n_max=8):
         """Genera datos reproducibles distintos por matrícula/grupo/periodo."""
         semilla_txt = (
-            f"{self.matricula}|{self.grupo}|{self.periodo}|{clave}|UAZ"
+            f"{self.alumno.get('matricula','')}|{self.alumno.get('grupo','')}|{self.alumno.get('periodo','')}|{clave}|UAZ"
         )
         h = hashlib.sha256(semilla_txt.encode("utf-8")).hexdigest()
         semilla = int(h[:16], 16)
@@ -635,25 +632,25 @@ del tiempo.
 Con interés simple, los intereses se calculan únicamente sobre el capital
 inicial:
 
-    Saldo_final = Principal (1 + i t)
+    S = P(1 + i t)
 
 Con interés compuesto, los intereses generados se reinvierten:
 
-    Saldo_final = Principal (1 + i)^t
+    S = P(1 + i)^t
 
 En Python, la potencia se escribe con **.""")
-        self.ejemplo("Principal = 10000\ni = 0.08\nt = 5\nSaldo_final = Principal * (1 + i)**t\nSaldo_final", "14693.28")
+        self.ejemplo("P = 10000\ni = 0.08\nt = 5\nS = P * (1 + i)**t\nS", "14693.28")
         self.codigo(L, "Crea P=10000, i=0.08 y t=5 en una sola línea separada por punto y coma.",
                     lambda e,c: e.get("P")==10000 and e.get("i")==0.08 and e.get("t")==5,
                     "Ejemplo: P=10000; i=0.08; t=5")
-        self.expresion(L, "Calcula el Saldo Final con interés compuesto.",
+        self.expresion(L, "Calcula S con interés compuesto.",
                        lambda v,c,e: abs(float(v)-14693.280768)<1e-6 and "**" in c,
                        "Usa P * (1 + i)**t.")
-        self.expresion(L, "Calcula el saldo final con interés simple para los mismos datos.",
+        self.expresion(L, "Calcula S con interés simple para los mismos datos.",
                        lambda v,c,e: abs(float(v)-14000)<1e-6,
                        "Usa P * (1 + i*t).")
-        vp_i, r_i, n_i = self.datos_individuales("4.1-final")
-        objetivo_i = vp_i * (1 + r_i)**n_i
+        p_i, i_i, t_i = self.datos_individuales("4.1-final")
+        objetivo_i = p_i * (1 + i_i)**t_i
         self.explicar(f"""RETO INDIVIDUAL
 
 Este ejercicio usa datos generados a partir de tu matrícula, grupo y periodo.
@@ -670,45 +667,45 @@ no solamente el resultado numérico.""")
             "Escribe la expresión de Python que resuelve tu reto individual.",
             lambda v,c,e,obj=objetivo_i:
                 abs(float(v)-obj) < 0.02 and "**" in c,
-            "Usa la estructura VP * (1 + r)**n con TUS datos."
+            "Usa la estructura P * (1 + i)**t con TUS datos."
         )
         self.completar(L, "Distingues interés simple y compuesto y puedes calcular ambos en Python.")
 
     def l42(self):
         L="4.2"; self.titulo("4.2 · CAPITALIZACIÓN m VECES AL AÑO")
-        self.explicar("""Si una tasa nominal anual r se capitaliza m veces por año durante
+        self.explicar("""Si una tasa nominal anual i se capitaliza m veces por año durante
 t años, el valor futuro es:
 
-    VF = VP(1 + r/m)^(m t)
+    S = P(1 + i/m)^(m t)
 
 En Python:
 
-    VF = VP * (1 + r/m)**(m*t)
+    S = P * (1 + i/m)**(m*t)
 
 Cuando m aumenta, la capitalización se aproxima al caso continuo.""")
-        self.ejemplo("VP=10000\nr=0.12\nm=12\nt=2\nVP*(1+r/m)**(m*t)", "12697.35")
+        self.ejemplo("P=10000\ni=0.12\nm=12\nt=2\nP*(1+i/m)**(m*t)", "12697.35")
         self.codigo(L, "Crea m=12 y t=2.",
                     lambda e,c: e.get("m")==12 and e.get("t")==2,
                     "Puedes escribir m=12; t=2")
-        self.expresion(L, "Con VP=10000 y r=0.12, calcula VF con capitalización mensual durante 2 años.",
+        self.expresion(L, "Con P=10000 e i=0.12, calcula S con capitalización mensual durante 2 años.",
                        lambda v,c,e: abs(float(v)-12697.3466)<0.02 and "/m" in c,
-                       "Usa VP * (1 + r/m)**(m*t).")
-        vp_i, r_i, n_i = self.datos_individuales(
+                       "Usa P * (1 + i/m)**(m*t).")
+        p_i, i_i, t_i = self.datos_individuales(
             "4.2-final", vp_min=12000, vp_max=35000,
             tasa_min=6, tasa_max=15, n_min=1, n_max=5
         )
         # Capitalizaciones posibles: trimestral, mensual o semestral.
         opciones_m = [2, 4, 12]
         indice_m = int(hashlib.sha256(
-            f"{self.matricula}|{self.grupo}|{self.periodo}|4.2-m".encode("utf-8")
+            f"{self.alumno.get('matricula','')}|{self.alumno.get('grupo','')}|{self.alumno.get('periodo','')}|4.2-m".encode("utf-8")
         ).hexdigest()[:8], 16) % len(opciones_m)
         m_i = opciones_m[indice_m]
-        objetivo_i = vp_i * (1 + r_i/m_i)**(m_i*n_i)
+        objetivo_i = p_i * (1 + i_i/m_i)**(m_i*t_i)
 
         self.explicar(f"""RETO INDIVIDUAL
 
 Capital inicial: ${vp_i:,.0f}
-Tasa nominal anual: {100*r_i:.1f}%
+Tasa nominal anual i: {100*i_i:.1f}%
 Capitalización: {m_i} veces por año
 Plazo: {n_i} años
 
@@ -718,7 +715,7 @@ Calcula el valor futuro usando capitalización periódica.""")
             "Escribe la expresión de Python para resolver tu reto individual.",
             lambda v,c,e,obj=objetivo_i,mv=m_i:
                 abs(float(v)-obj) < 0.02 and "**" in c and str(mv) in c,
-            "Usa VP * (1 + r/m)**(m*t) con tus datos."
+            "Usa P * (1 + i/m)**(m*t) con tus datos."
         )
         self.completar(L, "Aprendiste capitalización periódica m veces al año.")
 
@@ -729,22 +726,22 @@ Calcula el valor futuro usando capitalización periódica.""")
         self.explicar("""En capitalización continua, el número de periodos de capitalización
 tiende a infinito. La expresión es:
 
-    VF = VP e^(r t)
+    S = P e^(i t)
 
 En Python podemos usar math.exp():
 
-    VF = VP * math.exp(r*t)""")
+    S = P * math.exp(i*t)""")
         self.ejemplo("import math\nVP=10000\nr=0.08\nt=5\nVP*math.exp(r*t)", "14918.25")
-        self.expresion(L, "Calcula el valor futuro continuo de VP=10000, r=0.08, t=5.",
+        self.expresion(L, "Calcula S con capitalización continua para P=10000, i=0.08, t=5.",
                        lambda v,c,e: abs(float(v)-14918.24698)<0.02 and "exp" in c,
                        "Usa 10000 * math.exp(0.08*5).")
         self.opcion(L, "¿Qué función representa e elevado a x?\nA) math.exp(x)   B) math.log(x)   C) math.sqrt(x)",
                     ["a","math.exp(x)"], "La función se llama exp.")
-        vp_i, r_i, n_i = self.datos_individuales(
+        p_i, i_i, t_i = self.datos_individuales(
             "4.3-final", vp_min=10000, vp_max=40000,
             tasa_min=5, tasa_max=13, n_min=2, n_max=7
         )
-        objetivo_i = vp_i * math.exp(r_i*n_i)
+        objetivo_i = p_i * math.exp(i_i*t_i)
         self.explicar(f"""RETO INDIVIDUAL
 
 Capital inicial: ${vp_i:,.0f}
@@ -757,36 +754,36 @@ Calcula el valor futuro con capitalización continua.""")
             "Resuelve tu reto usando math.exp().",
             lambda v,c,e,obj=objetivo_i:
                 abs(float(v)-obj) < 0.02 and "exp" in c,
-            "Usa VP * math.exp(r*t) con tus datos."
+            "Usa P * math.exp(i*t) con tus datos."
         )
         self.completar(L, "Aprendiste a trabajar con capitalización continua mediante math.exp().")
 
     def l44(self):
         L="4.4"; self.titulo("4.4 · TASAS EFECTIVAS Y EQUIVALENTES")
-        self.explicar("""Una tasa nominal r capitalizable m veces al año puede transformarse
+        self.explicar("""Una tasa nominal i capitalizable m veces al año puede transformarse
 en tasa efectiva anual:
 
-    TEA = (1 + r/m)^m - 1
+    TEA = (1 + i/m)^m - 1
 
 Dos tasas son equivalentes cuando producen el mismo factor de acumulación
 durante el mismo horizonte.""")
-        self.ejemplo("r=0.12\nm=12\ntea=(1+r/m)**m - 1\ntea", "0.126825...")
-        self.codigo(L, "Crea r_nominal=0.12 y m_anual=12.",
-                    lambda e,c: e.get("r_nominal")==0.12 and e.get("m_anual")==12,
-                    "Usa r_nominal=0.12; m_anual=12")
+        self.ejemplo("i=0.12\nm=12\ntea=(1+i/m)**m - 1\ntea", "0.126825...")
+        self.codigo(L, "Crea i_nominal=0.12 y m_anual=12.",
+                    lambda e,c: e.get("i_nominal")==0.12 and e.get("m_anual")==12,
+                    "Usa i_nominal=0.12; m_anual=12")
         self.expresion(L, "Calcula la tasa efectiva anual.",
                        lambda v,c,e: abs(float(v)-0.12682503)<1e-6,
-                       "Usa (1+r_nominal/m_anual)**m_anual - 1.")
-        _, r_i, _ = self.datos_individuales(
+                       "Usa (1+i_nominal/m_anual)**m_anual - 1.")
+        _, i_i, _ = self.datos_individuales(
             "4.4-final", vp_min=10000, vp_max=10000,
             tasa_min=6, tasa_max=18, n_min=1, n_max=1
         )
         opciones_m = [2, 4, 12]
         indice_m = int(hashlib.sha256(
-            f"{self.matricula}|{self.grupo}|{self.periodo}|4.4-m".encode("utf-8")
+            f"{self.alumno.get('matricula','')}|{self.alumno.get('grupo','')}|{self.alumno.get('periodo','')}|4.4-m".encode("utf-8")
         ).hexdigest()[:8], 16) % len(opciones_m)
         m_i = opciones_m[indice_m]
-        objetivo_i = (1 + r_i/m_i)**m_i - 1
+        objetivo_i = (1 + i_i/m_i)**m_i - 1
 
         self.explicar(f"""RETO INDIVIDUAL
 
@@ -799,7 +796,7 @@ Calcula la tasa efectiva anual equivalente.""")
             "Escribe la expresión de Python para obtener la TEA.",
             lambda v,c,e,obj=objetivo_i:
                 abs(float(v)-obj) < 1e-6 and "**" in c,
-            "Usa (1 + r/m)**m - 1."
+            "Usa (1 + i/m)**m - 1."
         )
         self.completar(L, "Puedes convertir una tasa nominal capitalizable a tasa efectiva anual.")
 
@@ -917,7 +914,7 @@ siempre que r > g.""")
         )
         # g siempre menor que r.
         sem_g = int(hashlib.sha256(
-            f"{self.matricula}|{self.grupo}|{self.periodo}|4.7-g".encode("utf-8")
+            f"{self.alumno.get('matricula','')}|{self.alumno.get('grupo','')}|{self.alumno.get('periodo','')}|4.7-g".encode("utf-8")
         ).hexdigest()[:8], 16)
         g_i = (1 + sem_g % max(1, int(r_i*100)-2)) / 100
         if g_i >= r_i:
@@ -966,7 +963,7 @@ Python permite expresar esta suma con sum() y range().""")
         )
         # Cupón anual individual entre 4% y 12% del VN.
         sem_c = int(hashlib.sha256(
-            f"{self.matricula}|{self.grupo}|{self.periodo}|4.8-c".encode("utf-8")
+            f"{self.alumno.get('matricula','')}|{self.alumno.get('grupo','')}|{self.alumno.get('periodo','')}|4.8-c".encode("utf-8")
         ).hexdigest()[:8], 16)
         tasa_cupon = (4 + sem_c % 9) / 100
         cup_i = vn_i * tasa_cupon
@@ -1021,7 +1018,7 @@ dividendos y un precio esperado de venta.""")
         # Ajuste porque datos_individuales genera múltiplos de 100 para vp.
         d1_i = max(2, round(d1_i / 100, 2))
         sem_g = int(hashlib.sha256(
-            f"{self.matricula}|{self.grupo}|{self.periodo}|4.9-g".encode("utf-8")
+            f"{self.alumno.get('matricula','')}|{self.alumno.get('grupo','')}|{self.alumno.get('periodo','')}|4.9-g".encode("utf-8")
         ).hexdigest()[:8], 16)
         g_i = (2 + sem_g % 5) / 100
         if g_i >= r_i:
